@@ -67,10 +67,17 @@ XGBoost use list of pair to save [parameters](../parameter.md). Eg
 ```python
 param = {'bst:max_depth':2, 'bst:eta':1, 'silent':1, 'objective':'binary:logistic' }
 param['nthread'] = 4
-plst = param.items()
-plst += [('eval_metric', 'auc')] # Multiple evals can be handled in this way
-plst += [('eval_metric', 'ams@0')]
+param['eval_metric'] = 'auc'
 ```
+* You can also specify multiple eval metrics:
+```python
+param['eval_metric'] = ['auc', 'ams@0'] 
+
+# alternativly:
+# plst = param.items()
+# plst += [('eval_metric', 'ams@0')]
+```
+
 * Specify validations set to watch performance
 ```python
 evallist  = [(dtest,'eval'), (dtrain,'train')]
@@ -114,9 +121,9 @@ Early stopping requires at least one set in `evals`. If there's more than one, i
 
 The model will train until the validation score stops improving. Validation error needs to decrease at least every `early_stopping_rounds` to continue training.
 
-If early stopping occurs, the model will have two additional fields: `bst.best_score` and `bst.best_iteration`. Note that `train()` will return a model from the last iteration, not the best one.
+If early stopping occurs, the model will have three additional fields: `bst.best_score`, `bst.best_iteration` and `bst.best_ntree_limit`. Note that `train()` will return a model from the last iteration, not the best one.
 
-This works with both metrics to minimize (RMSE, log loss, etc.) and to maximize (MAP, NDCG, AUC).
+This works with both metrics to minimize (RMSE, log loss, etc.) and to maximize (MAP, NDCG, AUC). Note that if you specify more than one evaluation metric the last one in `param['eval_metric']` is used for early stopping.
 
 Prediction
 ----------
@@ -128,9 +135,9 @@ dtest = xgb.DMatrix(data)
 ypred = bst.predict(xgmat)
 ```
 
-If early stopping is enabled during training, you can predict with the best iteration.
+If early stopping is enabled during training, you can get predicticions from the best iteration with `bst.best_ntree_limit`:
 ```python
-ypred = bst.predict(xgmat,ntree_limit=bst.best_iteration)
+ypred = bst.predict(xgmat,ntree_limit=bst.best_ntree_limit)
 ```
 
 Plotting
